@@ -2,22 +2,7 @@
 
 # Storyline: Extract IPs from emergingthreats.net and create a firewall ruleset
 
-# Checks to see if network threat file exists already
-# if [[ -f "/tmp/emerging-drop.suricata.rules" ]]
-# then
-#	echo "This file exists."
-#	echo -n "Would you like to redownload it? [Y|N]: "
-#	read to_overwrite
-#
-#	if [[ "${to_overwrite}" == "Y" || "${to_overwrite}" == "y" ]]
-#	then
-#wget http://rules.emergingthreats.net/blockrules/emerging-drop.suricata.rules -O /tmp/emerging-drop.suricata.rules
-#	fi
-#else
-#	echo ""
-#fi
-
-
+# Checks to see if network threat file exists 
 
 function makeRules() {
 	wget http://rules.emergingthreats.net/blockrules/emerging-drop.suricata.rules -O /tmp/emerging-drop.suricata.rules
@@ -46,17 +31,7 @@ else
 fi
 clear
 
-
-echo "[I]P Tables"
-echo "[C]isco Tables"
-echo "[N]etscreen Tables"
-echo "[W]indows Firewall"
-echo "[M]acOS"
-echo "[P]arse Cisco File"
-echo "[E]xit"
-echo "Select an option from the list above: "
-
-while getopts 'icnwmp' OPTION ; do
+while getopts 'icnwmpe' OPTION ; do
 	case "$OPTION" in
 		i) iptables=${OPTION}
 		;;
@@ -69,6 +44,8 @@ while getopts 'icnwmp' OPTION ; do
 		m) macOS=${OPTION}
 		;;
 		p) parseCisco=${OPTION}
+		;;
+		e) exit 0
 		;;
 		*)
 			echo "Invalid entry."
@@ -97,13 +74,13 @@ then
 	rm badIPs.nocidr
 	clear
 	echo 'IP tables for firewall drop rules now in file badIPs.cisco'
-
+fi
 if [[ ${wfirewall} ]]
 then
 	egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.0' badIPs.txt | tee badIPs.windowsform
 	for eachip in $(cat badIPs.windowsform)
 	do
-		echo "netsh advfirewall firewall add rule name=\"BLOCK IP ADDRESS - ${eachip}\" dir=in action=block remoteip=${eachip} | tee -a badIPs.netsh
+		echo "netsh advfirewall firewall add rule name=\"BLOCK IP ADDRESS - ${eachip}\" dir=in action=block remoteip=${eachip}" | tee -a badIPs.netsh
 	done
 	rm badIPs.windowsform
 	clear
@@ -112,7 +89,6 @@ fi
 
 if [[ ${macOS} ]]
 then
-	
 	echo '
 	scrub-anchor "com.apple/*"
 	nat-anchor "com.apple/*"
