@@ -85,7 +85,7 @@ PresharedKey = ${pre}
 AllowedIPs = 10.254.132.${ip}/32
 # ${the_client} end" | tee -a wg0.conf
 
-echo "
+
 sudo cp wg0.conf /etc/wireguard
 sudo wg addconf wg0 <(wg-quick strip wg0)
-"
+

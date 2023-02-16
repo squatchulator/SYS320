@@ -2,12 +2,15 @@
 
 # Storyline: Extract IPs from emergingthreats.net and create a firewall ruleset
 
-# Checks to see if network threat file exists 
-
+# This function is referred to when the user needs to download the emerging threats file.
+# The 'egrep' command extracts IPs from the file in the format 'X.X.X.X/X'
+# and saves the output to a file called badIPs.txt
 function makeRules() {
 	wget http://rules.emergingthreats.net/blockrules/emerging-drop.suricata.rules -O /tmp/emerging-drop.suricata.rules
 	egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.0/[0-9]{1,2}' /tmp/emerging-drop.suricata.rules | sort -u | tee badIPs.txt
 }
+# Checks to see if the file badIPs.txt exists already on the host.
+# If the file exists, the user is prompted if they want to download it again or not.
 
 if [[ -f badIPs.txt ]]
 then
@@ -31,6 +34,8 @@ else
 fi
 clear
 
+# Parameters that can be specified when this script is run.
+# Example: bash parse-threats.bash -i will result in the IP tables block list generation.
 while getopts 'icnwmpe' OPTION ; do
 	case "$OPTION" in
 		i) iptables=${OPTION}
@@ -53,7 +58,7 @@ while getopts 'icnwmpe' OPTION ; do
 		;;
 	esac
 done
-
+# Appends the echo output of badIPs.txt to the bottom of a file called badIPs.iptables
 if [[ ${iptables} ]]
 then
 	for eachip in $(cat badIPs.txt)
@@ -63,7 +68,7 @@ then
 	clear
 	echo 'IP tables for firewall drop rules now in file badIPs.iptables'
 fi
-
+# Appends the echo output of badIPs.txt to the bottom of a file called badIPs.cisco
 if [[ ${cisco} ]]
 then
 	egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.0' badIPs.txt | tee badIPs.nocidr
@@ -75,6 +80,7 @@ then
 	clear
 	echo 'IP tables for firewall drop rules now in file badIPs.cisco'
 fi
+# Appends the echo output of badIPs.txt to the bottom of a file called badIPs.windowsform
 if [[ ${wfirewall} ]]
 then
 	egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.0' badIPs.txt | tee badIPs.windowsform
@@ -86,9 +92,10 @@ then
 	clear
 	echo 'IP tables for firewall drop rules now in file badIPs.netsh'
 fi
-
+# Appends the echo output of badIPs.txt to the bottom of a file called pf.conf
 if [[ ${macOS} ]]
 then
+	
 	echo '
 	scrub-anchor "com.apple/*"
 	nat-anchor "com.apple/*"
@@ -104,7 +111,7 @@ then
 	clear
 	echo 'IP tables for firewall drop rules now in file pf.conf'
 fi
-
+# Appends the parsed IP address outputs of the URL to the bottom of a file called ciscothreats.txt 
 if [[ ${parseCisco} ]]
 then
 	wget https://raw.githubusercontent.com/botherder/targetedthreats/master/targetedthreats.csv -O /tmp/targetedthreats.csv
